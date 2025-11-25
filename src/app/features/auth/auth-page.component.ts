@@ -50,6 +50,8 @@ export class AuthPageComponent {
   readonly signupForm = this.fb.nonNullable.group({
     fullName: ['', [Validators.required]],
     email: ['', [Validators.required, Validators.email]],
+    password: ['', [Validators.required, Validators.minLength(6)]],
+    confirmPassword: ['', [Validators.required, Validators.minLength(6)]],
     phone: ['', [Validators.required]],
     club: [''],
     experience: ['Débutant'],
@@ -100,7 +102,15 @@ export class AuthPageComponent {
       return;
     }
 
-    const { fullName, email, phone, club, experience } = this.signupForm.getRawValue();
+    const { fullName, email, phone, club, experience, password, confirmPassword } = this.signupForm.getRawValue();
+    if ((password || '').length < 6) {
+      this.feedbackMessage.set('Mot de passe doit contenir au moins 6 caractères.');
+      return;
+    }
+    if (password !== confirmPassword) {
+      this.feedbackMessage.set('Les mots de passe ne correspondent pas.');
+      return;
+    }
     const role = this.selectedRole();
     const [firstName, ...rest] = String(fullName || '').trim().split(' ');
     const secondName = rest.join(' ') || firstName || 'User';
@@ -115,8 +125,7 @@ export class AuthPageComponent {
         }
         const payload: UserRegistrationRequestDto = {
           username,
-          // Temporary password since UI has no password field yet
-          password: 'ChangeMe123!',
+          password: String(password),
           roleId: found.id,
           firstName: firstName || 'User',
           secondName,
