@@ -1,0 +1,383 @@
+<div class="owner-layout">
+  <aside class="sidebar">
+    <div class="logo">Arena<span>Pro</span></div>
+    <nav>
+      <button
+        *ngFor="let section of sections"
+        type="button"
+        (click)="setSection(section.key)"
+        [class.active]="activeSection() === section.key"
+      >
+        <span class="icon">
+          <svg
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <g [ngSwitch]="section.icon">
+              <g *ngSwitchCase="'activity'">
+                <path d="M22 12h-4l-3 9L9 3 6 12H2" />
+              </g>
+              <g *ngSwitchCase="'layers'">
+                <path d="M12 2L3 7l9 5 9-5Z" />
+                <path d="M3 12l9 5 9-5" />
+                <path d="M3 17l9 5 9-5" />
+              </g>
+              <g *ngSwitchCase="'players'">
+                <circle cx="9" cy="8" r="3.2" />
+                <path d="M2 21v-1.6c0-3.1 2.5-5.6 5.6-5.6H11c3.1 0 5.6 2.5 5.6 5.6V21" />
+                <circle cx="17" cy="6.5" r="2.3" />
+                <path d="M22 21v-1c0-2.1-1.1-4-2.9-5.1" />
+              </g>
+              <g *ngSwitchCase="'feedback'">
+                <circle cx="12" cy="11" r="7.2" />
+                <path d="M8.3 18.7 8 22l3.7-2" />
+              </g>
+              <g *ngSwitchCase="'profile'">
+                <path d="M4 7h16" />
+                <path d="M4 12h12" />
+                <path d="M4 17h9" />
+                <circle cx="15" cy="7" r="1.8" />
+                <circle cx="13" cy="12" r="1.6" />
+                <circle cx="11" cy="17" r="1.5" />
+              </g>
+              <g *ngSwitchDefault>
+                <path d="M4 12h16" />
+              </g>
+            </g>
+          </svg>
+        </span>
+        {{ section.label }}
+      </button>
+    </nav>
+  </aside>
+
+  <div class="content">
+    <header class="top-bar">
+      <div>
+        <p class="eyebrow">Admin dashboard</p>
+        <h1>Experience propriétaire</h1>
+      </div>
+      <div class="top-actions">
+        <div class="notification-stack">
+          <article *ngFor="let notification of notificationsDisplay()">
+            <span class="icon">{{ notificationIcon(notification) }}</span>
+            <div>
+              <strong>{{ notification.label }}</strong>
+              <small>{{ notification.time }}</small>
+            </div>
+          </article>
+        </div>
+        <div class="profile-chip" (click)="toggleProfileMenu()">
+          <span class="avatar">AO</span>
+          <div>
+            <strong>{{ authUser()?.username ?? 'owner' }}</strong>
+            <small>Owner</small>
+          </div>
+        </div>
+        <div class="profile-menu" *ngIf="showProfileMenu()">
+          <button type="button">Mon profil</button>
+          <button type="button" class="logout" (click)="logout()">Déconnexion</button>
+        </div>
+      </div>
+    </header>
+
+    <section class="section" *ngIf="activeSection() === 'overview'">
+      <div class="overview-grid">
+        <article class="overview-card">
+          <p>Terrains actifs</p>
+          <h2>{{ terrains().length }}</h2>
+          <small>Synchronisé</small>
+        </article>
+        <article class="overview-card" *ngFor="let kpi of ownerKpis()">
+          <p>{{ kpi.label }}</p>
+          <h2>{{ kpi.value }}</h2>
+          <small>{{ kpi.trend }}</small>
+        </article>
+      </div>
+      <div class="trend-card">
+        <header>
+          <div>
+            <p class="eyebrow">Vision dynamique</p>
+            <h3>Courbe d’occupation (7j)</h3>
+            <small>Analyse des réservations confirmées</small>
+          </div>
+          <div class="trend-pills">
+            <span class="pill positive">
+              {{ trendStats().variationPercent >= 0 ? '+' : '' }}{{ trendStats().variationPercent }}%
+              <small>vs 7 derniers jours</small>
+            </span>
+            <span class="pill ghost">Moyenne {{ trendStats().avg }} rés./jour</span>
+          </div>
+        </header>
+        <div class="trend-chart">
+          <svg viewBox="0 0 260 90" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#71f9cb" stop-opacity="0.45" />
+                <stop offset="100%" stop-color="#71f9cb" stop-opacity="0" />
+              </linearGradient>
+            </defs>
+            <path class="area" [attr.d]="trendArea()" />
+            <path class="line" [attr.d]="trendPath()" />
+          </svg>
+          <div class="trend-axis">
+            <div *ngFor="let axis of trendAxis()">
+              <strong>{{ axis.value }}</strong>
+              <small>{{ axis.label }}</small>
+            </div>
+          </div>
+        </div>
+        <div class="trend-meta">
+          <article>
+            <p>Jour le plus chargé</p>
+            <strong>{{ trendStats().peakDay }}</strong>
+            <small>{{ trendStats().peakValue }} réservations</small>
+          </article>
+          <article>
+            <p>Volume moyen</p>
+            <strong>{{ trendStats().avg }} rés.</strong>
+            <small>Moyenne glissante 7j</small>
+          </article>
+          <article>
+            <p>Variation brute</p>
+            <strong
+              [class.positive]="trendStats().variation >= 0"
+              [class.negative]="trendStats().variation < 0"
+            >
+              {{ trendStats().variation >= 0 ? '+' : '' }}{{ trendStats().variation }}
+            </strong>
+            <small>vs début semaine</small>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" *ngIf="activeSection() === 'terrains'">
+      <div class="section-header">
+        <div>
+          <h2>Terrains & disponibilités</h2>
+          <small>Recherche intelligente + visualisation timeline</small>
+        </div>
+        <div class="actions">
+          <label class="search-field">
+            <span class="icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="1.6" />
+                <line
+                  x1="16.5"
+                  y1="16.5"
+                  x2="21"
+                  y2="21"
+                  stroke="currentColor"
+                  stroke-width="1.6"
+                  stroke-linecap="round"
+                ></line>
+              </svg>
+            </span>
+            <input
+              type="search"
+              placeholder="Recherche assistée (nom, ville, type...)"
+              (input)="updateSearch($any($event.target).value)"
+            />
+          </label>
+          <button class="primary" type="button" (click)="openTerrainModal('create')">Créer un terrain</button>
+        </div>
+      </div>
+      <div class="main-grid">
+        <article class="panel terrain-list">
+          <div class="terrain-cards">
+            <article
+              *ngFor="let terrain of terrains(); trackBy: trackById"
+              (click)="selectTerrain(terrain)"
+              [class.active]="selectedTerrain()?.id === terrain.id"
+            >
+              <img [src]="terrain.image" [alt]="terrain.name" />
+              <div>
+                <strong>{{ terrain.name }}</strong>
+                <p>{{ terrain.city }} · {{ terrain.type }}</p>
+                <small>Note {{ terrain.rating }} · {{ terrain.price }} TND/h</small>
+              </div>
+              <button class="ghost tiny" type="button" (click)="openTerrainModal('edit', terrain); $event.stopPropagation()">Modifier</button>
+            </article>
+          </div>
+        </article>
+
+        <article class="panel terrain-detail" *ngIf="selectedTerrain() as terrain">
+          <header>
+            <div>
+              <h3>{{ terrain.name }}</h3>
+              <small>{{ terrain.city }} · {{ terrain.type }}</small>
+            </div>
+            <button class="ghost" type="button" (click)="openTerrainModal('edit', terrain)">Modifier</button>
+          </header>
+
+          <div class="detail-grid">
+            <div class="map-wrapper">
+              <iframe [src]="mapUrl(terrain)" loading="lazy"></iframe>
+            </div>
+            <section class="timeline">
+              <p class="eyebrow">Disponibilités (08h → 18h)</p>
+              <div class="slot-row" *ngFor="let slot of terrain.availability">
+                <span class="slot-hour">{{ slot.label }}</span>
+                <div class="slot-bar">
+                  <span [class.reserved]="slot.reserved"></span>
+                </div>
+                <span class="slot-status" [class.busy]="slot.reserved">
+                  {{ slot.reserved ? ('Réservé · ' + (slot.reservedBy ?? 'Privé')) : 'Ouvert' }}
+                </span>
+              </div>
+            </section>
+          </div>
+        </article>
+      </div>
+
+      <section class="availability-board">
+        <header>
+          <div>
+            <h3>Disponibilités live</h3>
+            <small>Synthèse des créneaux pour chaque terrain</small>
+          </div>
+        </header>
+        <div class="availability-scroll">
+          <article class="availability-card" *ngFor="let terrain of terrains(); trackBy: trackById">
+            <div class="availability-header">
+              <div>
+                <strong>{{ terrain.name }}</strong>
+                <p>{{ terrain.city }} · {{ terrain.type }}</p>
+              </div>
+              <div class="availability-badges">
+                <span class="pill neon">{{ availableSlots(terrain) }} slots libres</span>
+                <span class="pill ghost">{{ nextFreeSlot(terrain) }}</span>
+              </div>
+            </div>
+            <div class="slot-pill-row">
+              <span class="slot-pill" *ngFor="let slot of terrain.availability" [class.reserved]="slot.reserved">
+                {{ slot.label }}
+                <small>{{ slot.reserved ? (slot.reservedBy ?? 'Réservé') : 'Disponible' }}</small>
+              </span>
+            </div>
+          </article>
+        </div>
+      </section>
+    </section>
+
+    <section class="section" *ngIf="activeSection() === 'players'">
+      <article class="panel">
+        <header>
+          <h3>Joueurs inscrits</h3>
+          <small>Gestion & bannissement</small>
+        </header>
+        <div class="player" *ngFor="let player of players(); trackBy: trackById">
+          <div>
+            <strong>{{ player.name }}</strong>
+            <p>{{ player.age }} ans · {{ player.gender }}</p>
+            <small>{{ player.phone }}</small>
+          </div>
+          <button class="ghost" [class.danger]="player.banned" (click)="toggleBan(player)">
+            {{ player.banned ? 'Dé-bannir' : 'Bannir' }}
+          </button>
+        </div>
+      </article>
+    </section>
+
+    <section class="section" *ngIf="activeSection() === 'feedback'">
+      <article class="panel">
+        <header>
+          <h3>Feedbacks récents</h3>
+          <small>Sur vos terrains</small>
+        </header>
+        <div class="feedback" *ngFor="let feedback of feedbacks(); trackBy: trackById">
+          <strong>{{ feedback.player }}</strong>
+          <p>{{ feedback.comment }}</p>
+          <small>{{ feedback.rating }} ⭐️ · {{ feedback.date }}</small>
+        </div>
+      </article>
+    </section>
+
+    <section class="section" *ngIf="activeSection() === 'profile'">
+      <article class="panel profile-panel">
+        <header>
+          <h3>Profil</h3>
+          <small>Modifier vos informations</small>
+        </header>
+        <form [formGroup]="profileForm" class="profile-form">
+          <label>
+            Nom complet
+            <input type="text" formControlName="fullName" />
+          </label>
+          <label>
+            Téléphone
+            <input type="tel" formControlName="phone" />
+          </label>
+          <label>
+            Email
+            <input type="email" formControlName="email" />
+          </label>
+          <label>
+            Bio
+            <textarea rows="3" formControlName="bio"></textarea>
+          </label>
+          <button class="primary" type="button">Enregistrer</button>
+        </form>
+      </article>
+    </section>
+  </div>
+</div>
+
+<div class="modal-backdrop" *ngIf="showTerrainModal()">
+  <div class="modal">
+    <header>
+      <h3>{{ modalMode() === 'create' ? 'Créer un terrain' : 'Modifier le terrain' }}</h3>
+      <button type="button" (click)="closeTerrainModal()">✕</button>
+    </header>
+    <form [formGroup]="terrainForm" (ngSubmit)="submitTerrain()">
+      <div class="form-grid">
+        <label>
+          Nom
+          <input type="text" formControlName="name" />
+        </label>
+        <label>
+          Type
+          <select formControlName="type">
+            <option value="Football">Football</option>
+            <option value="Volleyball">Volleyball</option>
+            <option value="Basketball">Basketball</option>
+          </select>
+        </label>
+        <label>
+          Ville
+          <input type="text" formControlName="city" />
+        </label>
+        <label>
+          Image (URL)
+          <input type="url" formControlName="image" />
+        </label>
+        <label>
+          Latitude
+          <input type="number" step="0.0001" formControlName="lat" />
+        </label>
+        <label>
+          Longitude
+          <input type="number" step="0.0001" formControlName="lng" />
+        </label>
+        <label>
+          Prix
+          <input type="number" formControlName="price" />
+        </label>
+        <label>
+          Note
+          <input type="number" step="0.1" formControlName="rating" />
+        </label>
+      </div>
+      <footer>
+        <button type="button" class="ghost" (click)="closeTerrainModal()">Annuler</button>
+        <button type="submit" class="primary">{{ modalMode() === 'create' ? 'Créer' : 'Mettre à jour' }}</button>
+      </footer>
+    </form>
+  </div>
+</div>

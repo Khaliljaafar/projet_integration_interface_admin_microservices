@@ -1,0 +1,78 @@
+<section class="auth-shell">
+  <div class="background-glow"></div>
+  <div class="panel hero-panel">
+    <div class="logo">
+      <span>Sport<span>Hub</span></span>
+    </div>
+    <h1>{{ heroTitle() }}</h1>
+    <p>{{ heroSubtitle() }}</p>
+
+    <div class="mood-cards">
+      <article class="mood-card">
+        <p>Statistiques temps réel</p>
+        <small>Analyse IA pour terrains & joueurs</small>
+      </article>
+      <article class="mood-card accent">
+        <p>Animations premium</p>
+        <small>Transitions fluides pour chaque interaction</small>
+      </article>
+    </div>
+  </div>
+
+  <div class="panel form-panel">
+    <div class="mode-toggle">
+      <button type="button" [class.active]="mode() === 'signin'" (click)="switchMode('signin')">Sign in</button>
+      <button type="button" [class.active]="mode() === 'signup'" (click)="switchMode('signup')">Sign up</button>
+    </div>
+
+    <div class="role-selector">
+      <p>Vous êtes :</p>
+      <div class="chips">
+        <button *ngFor="let role of roleOptions" type="button" [class.selected]="selectedRole() === role.value" (click)="updateRole(role.value)">
+          {{ role.label }}
+        </button>
+      </div>
+    </div>
+
+    <form *ngIf="mode() === 'signin'" [formGroup]="signinForm" (ngSubmit)="submitSignin()" class="form-grid">
+      <label>
+        Username
+        <input type="text" formControlName="username" placeholder="ex: admin" />
+      </label>
+      <label>
+        Mot de passe
+        <input type="password" formControlName="password" placeholder="••••••••" />
+      </label>
+      <button class="primary" type="submit">Entrer</button>
+    </form>
+
+    <form *ngIf="mode() === 'signup'" [formGroup]="signupForm" (ngSubmit)="submitSignup()" class="form-grid">
+      <label>
+        Nom & prénom
+        <input type="text" formControlName="fullName" placeholder="John Doe" />
+      </label>
+      <label>
+        Email professionnel
+        <input type="email" formControlName="email" placeholder="owner@club.com" />
+      </label>
+      <label>
+        Téléphone
+        <input type="tel" formControlName="phone" placeholder="+216 22 222 222" />
+      </label>
+      <label *ngIf="selectedRole() === 'owner'">
+        Club / Terrain
+        <input type="text" formControlName="club" placeholder="Arena Center" />
+      </label>
+      <label *ngIf="selectedRole() === 'player'">
+        Expérience
+        <select formControlName="experience">
+          <option *ngFor="let level of experienceLevels" [value]="level">{{ level }}</option>
+        </select>
+      </label>
+      <button class="primary" type="submit">Envoyer la demande</button>
+    </form>
+
+    <p class="feedback" *ngIf="feedbackMessage()">{{ feedbackMessage() }}</p>
+    <a class="alt-link" routerLink="/super-admin" *ngIf="mode() === 'signin' && selectedRole() === 'super-admin'">Accès rapide Super Admin</a>
+  </div>
+</section>

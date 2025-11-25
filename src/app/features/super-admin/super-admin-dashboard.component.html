@@ -1,0 +1,264 @@
+<div class="super-admin-layout">
+  <aside class="sidebar">
+    <div class="logo">
+      <span>Super</span>Control
+    </div>
+    <nav>
+      <button
+        *ngFor="let item of navItems"
+        type="button"
+        (click)="setActive(item.key)"
+        [class.active]="activeNav() === item.key"
+      >
+        <span class="icon">
+          <svg
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <g [ngSwitch]="item.icon">
+              <g *ngSwitchCase="'activity'">
+                <path d="M22 12h-4l-3 9L9 3 6 12H2" />
+              </g>
+              <g *ngSwitchCase="'map-pin'">
+                <path d="M12 21s7-7.2 7-12a7 7 0 1 0-14 0c0 4.8 7 12 7 12z" />
+                <circle cx="12" cy="9" r="2.5" />
+              </g>
+              <g *ngSwitchCase="'shield'">
+                <path d="M4 5.5 12 2l8 3.5V12c0 5-3.5 8.8-8 10-4.5-1.2-8-5-8-10z" />
+              </g>
+              <g *ngSwitchCase="'message-circle'">
+                <circle cx="12" cy="11" r="7.2" />
+                <path d="M8.3 18.7 8 22l3.7-2" />
+              </g>
+              <g *ngSwitchCase="'users'">
+                <circle cx="9" cy="8" r="3.1" />
+                <path d="M2 21v-1.5c0-3 2.4-5.4 5.4-5.4H11c3 0 5.4 2.4 5.4 5.4V21" />
+                <circle cx="17" cy="6.5" r="2.2" />
+                <path d="M22 21v-1c0-2-1-3.8-2.7-4.9" />
+              </g>
+            </g>
+          </svg>
+        </span>
+        {{ item.label }}
+      </button>
+    </nav>
+  </aside>
+
+  <div class="board">
+    <header class="top-bar">
+      <div>
+        <p class="eyebrow">Super admin</p>
+        <h1>Monitoring global</h1>
+      </div>
+      <div class="top-actions">
+        <div class="notification-center">
+          <button type="button" class="notification-trigger" (click)="toggleNotifications()">
+            <span class="badge">{{ notifications().length }}</span>
+            <svg
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M18 16v-5a6 6 0 1 0-12 0v5l-1.5 2.5h15z" />
+              <path d="M13.5 20a1.5 1.5 0 0 1-3 0" />
+            </svg>
+          </button>
+          <div class="notification-panel" *ngIf="showNotifications()">
+            <header>
+              <span>Notifications</span>
+              <small>{{ notifications().length }} nouvelles</small>
+            </header>
+            <article
+              *ngFor="let notification of notifications()"
+              (click)="navigateFromNotification(notification.target)"
+            >
+              <span class="notif-icon" [ngSwitch]="notificationIcon(notification)">
+                <svg *ngSwitchCase="'shield'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                  <path d="M4 5.5 12 2l8 3.5V12c0 5-3.5 8.8-8 10-4.5-1.2-8-5-8-10z" />
+                </svg>
+                <svg *ngSwitchCase="'map'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                  <path d="M12 21s7-7.2 7-12a7 7 0 1 0-14 0c0 4.8 7 12 7 12z" />
+                  <circle cx="12" cy="9" r="2.5" />
+                </svg>
+                <svg *ngSwitchCase="'user-x'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                  <path d="M2 21v-1.6c0-3.2 2.6-5.8 5.8-5.8H11c3.2 0 5.8 2.6 5.8 5.8V21" />
+                  <circle cx="9" cy="8" r="3.3" />
+                  <path d="m20 8 3 3m0-3-3 3" />
+                </svg>
+              </span>
+              <div>
+                <strong>{{ notification.label }}</strong>
+                <small>{{ notification.time }}</small>
+              </div>
+            </article>
+            <footer>
+              <button type="button" class="ghost tiny">Voir tout</button>
+            </footer>
+          </div>
+        </div>
+        <div class="profile-wrapper">
+          <div class="profile-chip" (click)="toggleProfileMenu()">
+            <span class="avatar">{{ (authUser()?.username ?? 'SA') | slice: 0: 2 | uppercase }}</span>
+            <div>
+              <strong>{{ authUser()?.username ?? 'Super Admin' }}</strong>
+              <small>Super Admin</small>
+            </div>
+          </div>
+          <div class="profile-menu" *ngIf="showProfileMenu()">
+            <button type="button">Paramètres</button>
+            <button type="button" class="logout" (click)="logout()">Sign out</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <section class="dashboard" *ngIf="activeNav() === 'dashboard'">
+      <div class="stat-grid">
+        <article *ngFor="let stat of statCards()" class="stat-card" [ngClass]="stat.accent">
+          <p>{{ stat.label }}</p>
+          <h2>{{ stat.value }}</h2>
+        </article>
+      </div>
+      <div class="dashboard-grid">
+        <article class="panel">
+          <header>
+            <div>
+              <h3>Terrain le plus utilisé</h3>
+              <small>{{ statCards()[1].value }}</small>
+            </div>
+          </header>
+          <svg viewBox="0 0 260 90" preserveAspectRatio="none">
+            <path [attr.d]="trendPath()" />
+          </svg>
+          <div class="top-terrain-insights" *ngIf="topTerrainDetails() as detail">
+            <article>
+              <p>Taux d’occupation</p>
+              <strong>{{ detail.utilization }}%</strong>
+              <small>{{ detail.busySlots }} / {{ detail.totalSlots }} créneaux réservés</small>
+            </article>
+            <article>
+              <p>Note & tarif</p>
+              <strong>{{ detail.terrain.rating }} ⭐️</strong>
+              <small>{{ detail.terrain.price }} TND / h</small>
+            </article>
+            <article>
+              <p>Prochain créneau</p>
+              <strong>{{ detail.nextSlot }}</strong>
+              <small>{{ detail.available }} slots libres</small>
+            </article>
+          </div>
+        </article>
+        <article class="panel">
+          <header>
+            <div>
+              <h3>Terrains</h3>
+              <small>Vue rapide</small>
+            </div>
+          </header>
+          <div class="terrain-list">
+            <article *ngFor="let terrain of terrains(); trackBy: trackById">
+              <div>
+                <strong>{{ terrain.name }}</strong>
+                <small>{{ terrain.city }} · {{ terrain.type }}</small>
+              </div>
+              <span>{{ terrain.rating }} ⭐️</span>
+            </article>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel" *ngIf="activeNav() === 'terrains'">
+      <header>
+        <div>
+          <h3>Terrains</h3>
+          <small>Tous les terrains</small>
+        </div>
+      </header>
+      <div class="terrain-grid">
+        <div class="terrain-card" *ngFor="let terrain of terrains(); trackBy: trackById">
+          <header>
+            <div class="terrain-info">
+              <strong>{{ terrain.name }}</strong>
+              <p>{{ terrain.city }} · {{ terrain.type }}</p>
+            </div>
+          </header>
+          <div class="terrain-body">
+            <div class="map-wrapper">
+              <iframe [src]="mapUrl(terrain.lat, terrain.lng)" loading="lazy"></iframe>
+            </div>
+            <ul class="terrain-meta">
+              <li>
+                <span>Ville</span>
+                <strong>{{ terrain.city }}</strong>
+              </li>
+              <li>
+                <span>Type</span>
+                <strong>{{ terrain.type }}</strong>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" *ngIf="activeNav() === 'admins'">
+      <header>
+        <div>
+          <h3>Demandes d'admins</h3>
+          <small>Validation en temps réel</small>
+        </div>
+        <span class="pill neon">Live</span>
+      </header>
+      <div class="request" *ngFor="let admin of pendingAdmins$(); trackBy: trackById">
+        <div>
+          <strong>{{ admin.name }}</strong>
+          <p>{{ admin.club }} · {{ admin.email }}</p>
+          <small>Status: <span [class]="admin.status">{{ admin.status }}</span></small>
+        </div>
+        <div class="cta">
+          <button class="ghost" (click)="rejectAdmin(admin)">Refuser</button>
+          <button class="primary" (click)="approveAdmin(admin)">Accepter</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" *ngIf="activeNav() === 'feedback'">
+      <header>
+        <h3>Feedback</h3>
+        <small>Contributions globales</small>
+      </header>
+      <div class="feedback" *ngFor="let feedback of feedbacks(); trackBy: trackById">
+        <strong>{{ feedback.player }}</strong>
+        <p>{{ feedback.comment }}</p>
+        <small>{{ feedback.rating }} ⭐️ · {{ feedback.date }}</small>
+      </div>
+    </section>
+
+    <section class="panel" *ngIf="activeNav() === 'players'">
+      <header>
+        <h3>Joueurs</h3>
+        <small>Statut & bannissement</small>
+      </header>
+      <div class="player" *ngFor="let player of players(); trackBy: trackById">
+        <div>
+          <strong>{{ player.name }}</strong>
+          <p>{{ player.age }} ans · {{ player.gender }}</p>
+          <small>{{ player.phone }}</small>
+        </div>
+        <button class="ghost" [class.danger]="player.banned" (click)="togglePlayerBan(player)">
+          {{ player.banned ? 'Dé-bannir' : 'Bannir' }}
+        </button>
+      </div>
+    </section>
+  </div>
+</div>
