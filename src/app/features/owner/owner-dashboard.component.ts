@@ -2,6 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { Router } from '@angular/router';
 import {
   AdminDataService,
   Feedback,
@@ -26,6 +27,7 @@ export class OwnerDashboardComponent {
   private readonly fb = inject(FormBuilder);
   private readonly nfb = inject(NonNullableFormBuilder);
   private readonly sanitizer = inject(DomSanitizer);
+  private readonly router = inject(Router);
   private readonly dayLabels = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 
   readonly sections: { key: OwnerSection; label: string; icon: string }[] = [
@@ -173,6 +175,7 @@ export class OwnerDashboardComponent {
 
   logout() {
     this.authService.clearSession();
+    this.router.navigate(['/auth']);
   }
 
   mapUrl(terrain: Terrain): SafeResourceUrl {

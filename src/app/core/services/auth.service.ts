@@ -20,7 +20,7 @@ export class AuthService {
   readonly authUser = this._authUser.asReadonly();
   readonly currentRole = this._currentRole.asReadonly();
 
-  login(username: string, password: string): Observable<boolean> {
+  loginWithResponse(username: string, password: string): Observable<LoginResponseDto> {
     const payload: LoginRequestDto = { username, password };
     return this.authApi.login(payload).pipe(
       tap((res: LoginResponseDto) => {
@@ -32,9 +32,12 @@ export class AuthService {
             localStorage.setItem('accessToken', res.accessToken);
           }
         }
-      }),
-      map((res: LoginResponseDto) => !!res.authenticated)
+      })
     );
+  }
+
+  login(username: string, password: string): Observable<boolean> {
+    return this.loginWithResponse(username, password).pipe(map((res) => !!res.authenticated));
   }
 
   private mapRole(label?: string): PlatformRole {

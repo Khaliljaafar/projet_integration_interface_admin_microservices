@@ -61,7 +61,6 @@ export class AuthPageComponent {
   readonly roleOptions: { value: PlatformRole; label: string }[] = [
     { value: 'player', label: 'Client / Joueur' },
     { value: 'owner', label: 'Admin (Owner)' },
-    { value: 'super-admin', label: 'Super Admin' }
   ];
 
   feedbackMessage = signal<string>('');
@@ -82,13 +81,23 @@ export class AuthPageComponent {
     }
 
     const { username, password } = this.signinForm.getRawValue();
-    this.authService.login(username!, password!).subscribe({
-      next: ok => {
-        if (!ok) {
-          this.feedbackMessage.set('Identifiants incorrects.');
+    this.authService.loginWithResponse(username!, password!).subscribe({
+      next: res => {
+        if (!res.authenticated) {
+          // Show backend message when credentials are invalid, account missing, or banned
+          const msg = res.message || 'Identifiants incorrects ou compte inexistant.';
+          this.feedbackMessage.set(msg);
           return;
         }
-        this.navigateAfterAuth(this.selectedRole());
+        const actual = this.authService.currentRole();
+        const selected = this.selectedRole();
+        // If actual is super-admin, ignore selection mismatch. Otherwise enforce match.
+        if (actual !== selected && actual !== 'super-admin') {
+          this.feedbackMessage.set('Identifiants incorrects ou compte inexistant.');
+          this.authService.clearSession();
+          return;
+        }
+        this.navigateAfterAuth(actual);
       },
       error: () => {
         this.feedbackMessage.set('Erreur de connexion. Veuillez réessayer.');
@@ -157,7 +166,7 @@ export class AuthPageComponent {
       return;
     }
 
-    // Client role currently redirigé vers interface joueur (autre projet)
-    this.router.navigate(['/owner'], { queryParams: { info: 'client' } });
+    // Client/Joueur
+    this.router.navigate(['/player']);
   }
 }

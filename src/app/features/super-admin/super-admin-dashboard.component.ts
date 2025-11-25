@@ -1,6 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule, NgClass, NgFor, AsyncPipe } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { Router } from '@angular/router';
 import {
   AdminDataService,
   Feedback,
@@ -32,6 +33,7 @@ export class SuperAdminDashboardComponent {
   private readonly dataService = inject(AdminDataService);
   private readonly authService = inject(AuthService);
   private readonly sanitizer = inject(DomSanitizer);
+  private readonly router = inject(Router);
 
   readonly navItems: { key: SuperAdminView; label: string; icon: string }[] = [
     { key: 'dashboard', label: 'Dashboard', icon: 'activity' },
@@ -157,6 +159,7 @@ export class SuperAdminDashboardComponent {
 
   logout() {
     this.authService.clearSession();
+    this.router.navigate(['/auth']);
   }
 
   trackById(_: number, item: Terrain | PlayerProfile | Feedback | AdminRequest | PendingStadiumRequest) {
