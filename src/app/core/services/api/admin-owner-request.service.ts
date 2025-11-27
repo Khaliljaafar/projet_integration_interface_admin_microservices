@@ -30,18 +30,19 @@ export class AdminOwnerRequestApiService {
   constructor(private client: ApiClientService) {}
 
   createWithStadium(payload: AdminOwnerCreateRequestDto): Observable<AdminOwnerResponseDto> {
-    return this.client.post<AdminOwnerResponseDto>('/api/owner-requests/create-with-stadium', payload);
+    // Backend exposes POST /api/owner-requests (no /create-with-stadium path)
+    return this.client.post<AdminOwnerResponseDto>('/stadium-management-service/api/owner-requests', payload);
   }
 
   list(params?: Record<string, any>): Observable<AdminOwnerResponseDto[]> {
-    return this.client.get<AdminOwnerResponseDto[]>('/api/owner-requests', params);
+    return this.client.get<AdminOwnerResponseDto[]>('/stadium-management-service/api/owner-requests', params);
   }
 
   listPending(): Observable<AdminOwnerResponseDto[]> {
-    return this.client.get<AdminOwnerResponseDto[]>('/api/owner-requests/pending');
+    return this.client.get<AdminOwnerResponseDto[]>('/stadium-management-service/api/owner-requests', { status: 'PENDING' });
   }
 
   updateStatus(requestId: number, status: string): Observable<AdminOwnerResponseDto> {
-    return this.client.put<AdminOwnerResponseDto>(`/api/owner-requests/${requestId}/status`, { status });
+    return this.client.put<AdminOwnerResponseDto>(`/stadium-management-service/api/owner-requests/${requestId}/status`, { status });
   }
 }

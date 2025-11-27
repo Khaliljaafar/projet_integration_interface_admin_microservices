@@ -11,6 +11,7 @@ import {
   PendingStadiumRequest
 } from '../../core/services/admin-data.service';
 import { AuthService } from '../../core/services/auth.service';
+import { AdminStateService } from '../../core/services/admin-state.service';
 
 type SuperAdminView = 'dashboard' | 'terrains' | 'admins' | 'feedback' | 'players';
 
@@ -25,7 +26,7 @@ interface AdminRequest {
 @Component({
   selector: 'app-super-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, NgClass, NgFor],
+  imports: [CommonModule, NgClass, NgFor, AsyncPipe],
   templateUrl: './super-admin-dashboard.component.html',
   styleUrl: './super-admin-dashboard.component.css'
 })
@@ -34,6 +35,7 @@ export class SuperAdminDashboardComponent {
   private readonly authService = inject(AuthService);
   private readonly sanitizer = inject(DomSanitizer);
   private readonly router = inject(Router);
+  private readonly adminState = inject(AdminStateService);
 
   readonly navItems: { key: SuperAdminView; label: string; icon: string }[] = [
     { key: 'dashboard', label: 'Dashboard', icon: 'activity' },
@@ -52,10 +54,7 @@ export class SuperAdminDashboardComponent {
   readonly players = this.dataService.players;
   readonly pendingStadiumRequests = this.dataService.pendingStadiumRequests;
   readonly authUser = this.authService.authUser;
-  readonly pendingAdmins$ = computed(() => [
-    { id: 1, name: 'Ahmed Khaled', club: 'Sport Club Sfax', email: 'ahmed@sportclub.tn', status: 'pending' },
-    { id: 2, name: 'Mariem Jalel', club: 'Terrain Elite', email: 'mariem@elite.tn', status: 'pending' }
-  ] as AdminRequest[]);
+  readonly pendingAdmins$ = this.adminState.pendingAdmins$;
 
   readonly statCards = computed(() => [
     { label: 'Terrains totaux', value: this.dataService.totalTerrains(), accent: 'violet' },
@@ -85,6 +84,7 @@ export class SuperAdminDashboardComponent {
 
   constructor() {
     this.dataService.loadDashboardData();
+    this.adminState.loadPendingAdmins();
   }
 
   setActive(item: SuperAdminView) {
@@ -93,13 +93,11 @@ export class SuperAdminDashboardComponent {
   }
 
   approveAdmin(admin: AdminRequest) {
-    // TODO: call backend API for admin approval (part 2)
-    console.log('Admin approved:', admin);
+    this.adminState.approveAdmin(admin.id);
   }
 
   rejectAdmin(admin: AdminRequest) {
-    // TODO: call backend API for admin rejection (part 2)
-    console.log('Admin rejected:', admin);
+    this.adminState.rejectAdmin(admin.id);
   }
 
   approveTerrain(terrain: Terrain) {

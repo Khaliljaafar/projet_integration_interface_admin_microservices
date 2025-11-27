@@ -219,7 +219,7 @@
         </div>
         <span class="pill neon">Live</span>
       </header>
-      <div class="request" *ngFor="let admin of pendingAdmins$(); trackBy: trackById">
+      <div class="request" *ngFor="let admin of (pendingAdmins$ | async) ?? []; trackBy: trackById">
         <div>
           <strong>{{ admin.name }}</strong>
           <p>{{ admin.club }} · {{ admin.email }}</p>

@@ -1,16 +1,38 @@
-curl -i -X POST http://localhost:9090/user-access-service/api/users -H "Content-Type: application/json" -d '{"username":"owner1@example.com","password":"ChangeMe123!","roleId":2,"firstName":"Owner","secondName":"One","phoneNumber":"+21622222222","address":"Arena Center"}'
-HTTP/1.1 404 Not Found
-Vary: Origin
-Vary: Access-Control-Request-Method
-Vary: Access-Control-Request-Headers
-Content-Type: application/json
-Content-Length: 143
-Cache-Control: no-cache, no-store, max-age=0, must-revalidate
-Pragma: no-cache
-Expires: 0
-X-Content-Type-Options: nosniff
-X-Frame-Options: DENY
-X-XSS-Protection: 0
-Referrer-Policy: no-referrer
++--------------------------+
+| Tables_in_stade_db       |
++--------------------------+
+| admin_owner_requests     |
+| admin_owner_stadium      |
+| ban_clients              |
+| client                   |
+| feedbacks                |
+| metric_snapshots         |
+| notification_admin       |
+| notification_client      |
+| notification_super_admin |
+| reservations             |
+| roles                    |
+| stadium_details          |
+| stadium_localisations    |
+| stadiums                 |
+| super_admin              |
+| time_reservation_detail  |
+| users                    |
++--------------------------+
+this is the structure of the database
 
-{"timestamp":"2025-11-23T22:05:52.610+00:00","path":"/user-access-service/api/users","status":404,"error":"Not Found","requestId":"ddca703b-1"}%  
+
+mysql> describe admin_owner_requests;
++------------------------+---------------------------------------+------+-----+---------+----------------+
+| Field                  | Type                                  | Null | Key | Default | Extra          |
++------------------------+---------------------------------------+------+-----+---------+----------------+
+| admin_owner_request_id | bigint                                | NO   | PRI | NULL    | auto_increment |
+| admin_id               | bigint                                | NO   |     | NULL    |                |
+| created_at             | datetime(6)                           | NO   |     | NULL    |                |
+| feedback_id            | bigint                                | YES  |     | NULL    |                |
+| status                 | enum('ACCEPTED','PENDING','REJECTED') | NO   |     | NULL    |                |
+| user_id                | bigint                                | NO   |     | NULL    |                |
+| stadium_id             | bigint                                | NO   | MUL | NULL    |                |
++------------------------+---------------------------------------+------+-----+---------+----------------+
+
+this is the structure of admin_owner_requests table 

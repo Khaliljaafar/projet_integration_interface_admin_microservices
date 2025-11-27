@@ -1,6 +1,7 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { Injectable, computed, signal, inject } from '@angular/core';
 import { delay, map } from 'rxjs';
 import { toObservable } from '@angular/core/rxjs-interop';
+import { AdminOwnerRequestApiService, AdminOwnerResponseDto } from './api/admin-owner-request.service';
 
 export type PlatformRole = 'guest' | 'super-admin' | 'owner' | 'player';
 
@@ -76,6 +77,7 @@ export interface AuthUser {
 
 @Injectable({ providedIn: 'root' })
 export class AdminStateService {
+  private readonly adminOwnerRequestApi = inject(AdminOwnerRequestApiService);
   private readonly slotTemplate: TerrainSlot[] = [
     { label: '08h - 10h', reserved: false },
     { label: '10h - 12h', reserved: true, reservedBy: 'Team Atlas' },
@@ -86,10 +88,7 @@ export class AdminStateService {
 
   private readonly _currentRole = signal<PlatformRole>('guest');
   private readonly _authUser = signal<AuthUser | null>(null);
-  private readonly _pendingAdmins = signal<AdminRequest[]>([
-    { id: 1, name: 'Salma Othmani', club: 'Arena Center', email: 'salma@arena.tn', submittedAt: 'Il y a 2h', status: 'pending' },
-    { id: 2, name: 'Yassine H.', club: 'United Fields', email: 'yassine@uf.com', submittedAt: 'Hier', status: 'pending' }
-  ]);
+  private readonly _pendingAdmins = signal<AdminRequest[]>([]);
   private readonly _terrainRequests = signal<TerrainRequest[]>([
     {
       id: 11,
@@ -222,29 +221,49 @@ export class AdminStateService {
   }
 
   signup(payload: Record<string, string | number>) {
-    if (payload['role'] === 'owner') {
-      const next: AdminRequest = {
-        id: Date.now(),
-        name: String(payload['fullName'] ?? 'Nouveau owner'),
-        club: String(payload['club'] ?? '—'),
-        email: String(payload['email'] ?? '—'),
-        submittedAt: 'Maintenant',
-        status: 'pending'
-      };
-      this._pendingAdmins.update(list => [next, ...list]);
-    }
+    // no-op: real signup handled elsewhere; do not inject fake pending admin requests
+  }
+
+  loadPendingAdmins() {
+    // If a backend provides pending list, load it; otherwise keep seed
+    this.adminOwnerRequestApi
+      .list({ status: 'PENDING' })
+      .subscribe({
+        next: (items: AdminOwnerResponseDto[]) => {
+          const mapped = items.map(i => ({
+            id: i.id,
+            name: i.userId ? `User ${i.userId}` : '—',
+            club: '—',
+            email: '—',
+            submittedAt: new Date(i.createdAt || '').toLocaleString() || '',
+            status: 'pending' as const
+          }));
+          this._pendingAdmins.set(mapped);
+        },
+        error: () => {
+          // keep seed data on error
+        }
+      });
   }
 
   approveAdmin(id: number) {
-    this._pendingAdmins.update(list =>
-      list.map(admin => (admin.id === id ? { ...admin, status: 'approved' } : admin))
-    );
+    this.adminOwnerRequestApi.updateStatus(id, 'ACCEPTED').subscribe({
+      next: () => {
+        this._pendingAdmins.update(list =>
+          list.map(admin => (admin.id === id ? { ...admin, status: 'approved' } : admin))
+        );
+      }
+    });
   }
 
   rejectAdmin(id: number) {
-    this._pendingAdmins.update(list =>
-      list.map(admin => (admin.id === id ? { ...admin, status: 'rejected' } : admin))
-    );
+    this.adminOwnerRequestApi.updateStatus(id, 'REJECTED').subscribe({
+      next: () => {
+        this._pendingAdmins.update(list =>
+          list.map(admin => (admin.id === id ? { ...admin, status: 'rejected' } : admin))
+        );
+      }
+    });
   }
 
   approveTerrain(id: number) {
