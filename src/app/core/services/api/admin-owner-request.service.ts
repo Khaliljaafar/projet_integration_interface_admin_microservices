@@ -25,12 +25,23 @@ export interface AdminOwnerResponseDto {
   createdAt: string;
 }
 
+export interface AdminOwnerSimpleCreateDto {
+  userId: number;
+  adminId?: number | null;
+  stadiumId?: number | null;
+  feedbackId?: number | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AdminOwnerRequestApiService {
   constructor(private client: ApiClientService) {}
 
   createWithStadium(payload: AdminOwnerCreateRequestDto): Observable<AdminOwnerResponseDto> {
     // Backend exposes POST /api/owner-requests (no /create-with-stadium path)
+    return this.client.post<AdminOwnerResponseDto>('/stadium-management-service/api/owner-requests', payload);
+  }
+
+  submit(payload: AdminOwnerSimpleCreateDto): Observable<AdminOwnerResponseDto> {
     return this.client.post<AdminOwnerResponseDto>('/stadium-management-service/api/owner-requests', payload);
   }
 

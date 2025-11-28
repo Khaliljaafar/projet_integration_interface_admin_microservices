@@ -8,6 +8,7 @@ import { UserService } from '../../core/services/api/user.service';
 import { RoleService } from '../../core/services/api/role.service';
 import { UserRegistrationRequestDto } from '../../core/models/user.model';
 import { catchError, of, switchMap } from 'rxjs';
+import { AdminOwnerRequestApiService } from '../../core/services/api/admin-owner-request.service';
 
 @Component({
   selector: 'app-auth-page',
@@ -23,6 +24,7 @@ export class AuthPageComponent {
   private readonly adminStateService = inject(AdminStateService);
   private readonly userService = inject(UserService);
   private readonly roleService = inject(RoleService);
+  private readonly adminOwnerReqApi = inject(AdminOwnerRequestApiService);
 
   readonly mode = signal<'signin' | 'signup'>('signin');
   readonly selectedRole = signal<PlatformRole>('owner');
@@ -150,6 +152,16 @@ export class AuthPageComponent {
       })
     ).subscribe(res => {
       if (!res) return;
+      // Auto-submit admin request for owners (no stadium required now)
+      if (this.selectedRole() === 'owner') {
+        const userId = Number(res.id);
+        if (!Number.isNaN(userId)) {
+          this.adminOwnerReqApi.submit({ userId }).subscribe({
+            next: () => {},
+            error: () => {}
+          });
+        }
+      }
       this.feedbackMessage.set('Inscription réussie ✔️. Vous pouvez maintenant vous connecter.');
       this.switchMode('signin');
     });

@@ -28,3 +28,10 @@ export function roleFromToken(token: string): PlatformRole {
   if (label.includes('admin') || label.includes('owner')) return 'owner';
   return 'player';
 }
+
+export function userIdFromToken(token: string): number | null {
+  const payload = decodeJwtPayload(token);
+  const uid = payload?.uid;
+  const n = Number(uid);
+  return Number.isFinite(n) ? n : null;
+}

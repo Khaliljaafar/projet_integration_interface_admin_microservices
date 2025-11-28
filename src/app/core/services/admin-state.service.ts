@@ -2,6 +2,7 @@ import { Injectable, computed, signal, inject } from '@angular/core';
 import { delay, map } from 'rxjs';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { AdminOwnerRequestApiService, AdminOwnerResponseDto } from './api/admin-owner-request.service';
+import { UserService } from './api/user.service';
 
 export type PlatformRole = 'guest' | 'super-admin' | 'owner' | 'player';
 
@@ -78,6 +79,7 @@ export interface AuthUser {
 @Injectable({ providedIn: 'root' })
 export class AdminStateService {
   private readonly adminOwnerRequestApi = inject(AdminOwnerRequestApiService);
+  private readonly usersApi = inject(UserService);
   private readonly slotTemplate: TerrainSlot[] = [
     { label: '08h - 10h', reserved: false },
     { label: '10h - 12h', reserved: true, reservedBy: 'Team Atlas' },
@@ -227,18 +229,39 @@ export class AdminStateService {
   loadPendingAdmins() {
     // If a backend provides pending list, load it; otherwise keep seed
     this.adminOwnerRequestApi
-      .list({ status: 'PENDING' })
+      .list({ status: 'PENDING', adminId: 1 })
       .subscribe({
         next: (items: AdminOwnerResponseDto[]) => {
-          const mapped = items.map(i => ({
-            id: i.id,
-            name: i.userId ? `User ${i.userId}` : '—',
-            club: '—',
-            email: '—',
-            submittedAt: new Date(i.createdAt || '').toLocaleString() || '',
-            status: 'pending' as const
-          }));
-          this._pendingAdmins.set(mapped);
+          const userIds = Array.from(new Set(items.map(i => i.userId).filter(Boolean)));
+          this.usersApi.list().subscribe({
+            next: users => {
+              const byId = new Map(users.map(u => [u.id, u] as const));
+              const mapped = items.map(i => {
+                const u = byId.get(i.userId);
+                const fullName = u ? `${u.firstName} ${u.secondName}`.trim() : `User ${i.userId}`;
+                return {
+                  id: i.id,
+                  name: fullName || `User ${i.userId}`,
+                  club: u?.address || '—',
+                  email: u?.username || '—',
+                  submittedAt: new Date(i.createdAt || '').toLocaleString() || '',
+                  status: 'pending' as const
+                };
+              });
+              this._pendingAdmins.set(mapped);
+            },
+            error: () => {
+              const fallback = items.map(i => ({
+                id: i.id,
+                name: i.userId ? `User ${i.userId}` : '—',
+                club: '—',
+                email: '—',
+                submittedAt: new Date(i.createdAt || '').toLocaleString() || '',
+                status: 'pending' as const
+              }));
+              this._pendingAdmins.set(fallback);
+            }
+          });
         },
         error: () => {
           // keep seed data on error
